@@ -4,6 +4,8 @@ import "package:todo_app/components/dialog_box.dart";
 import "package:todo_app/components/todo_tile.dart";
 import "package:todo_app/data/database.dart";
 
+enum MenuItems { clear, deleteCompleted, sort }
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -65,6 +67,31 @@ class _HomeState extends State<Home> {
     db.updateTasks();
   }
 
+  void clearAllTasks() {
+    setState(() {
+      db.todoTasks.clear();
+    });
+    db.updateTasks();
+  }
+
+  void deleteCompletedTasks() {
+    setState(() {
+      db.todoTasks.removeWhere((task) => task[1] == true);
+    });
+    db.updateTasks();
+  }
+
+  void sortTaskByName() {
+    setState(() {
+      db.todoTasks.sort(
+        (a, b) => a[0].toString().toLowerCase().compareTo(
+          b[0].toString().toLowerCase(),
+        ),
+      );
+    });
+    db.updateTasks();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,6 +103,55 @@ class _HomeState extends State<Home> {
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          PopupMenuButton(
+            icon: Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == MenuItems.clear) {
+                clearAllTasks();
+              } else if (value == MenuItems.deleteCompleted) {
+                deleteCompletedTasks();
+              } else if (value == MenuItems.sort) {
+                sortTaskByName();
+              }
+            },
+            itemBuilder: (context) => [
+              // option 1 clear All Tasks
+              PopupMenuItem(
+                value: MenuItems.clear,
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.black),
+                    SizedBox(width: 5),
+                    Text("Clear All Tasks"),
+                  ],
+                ),
+              ),
+              // option 2 delete completed tasks
+              PopupMenuItem(
+                value: MenuItems.deleteCompleted,
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green),
+                    SizedBox(width: 5),
+                    Text("delete_completed"),
+                  ],
+                ),
+              ),
+              // option 3 sort tasks by name
+              PopupMenuItem(
+                value: MenuItems.sort,
+                child: ListTile(
+                  leading: Icon(Icons.sort),
+                  title: Text("Sort Tasks by name"),
+                ),
+              ),
+            ],
+          ),
+          Icon(Icons.favorite),
+          Icon(Icons.favorite),
+          Icon(Icons.favorite),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: addButtonTapped,
