@@ -1,6 +1,8 @@
 import "package:flutter/material.dart";
+import "package:hive_flutter/hive_flutter.dart";
 import "package:todo_app/components/dialog_box.dart";
 import "package:todo_app/components/todo_tile.dart";
+import "package:todo_app/data/database.dart";
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,23 +12,35 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final _myBox = Hive.box('myBox');
+  ToDoDatabase db = ToDoDatabase();
+
+  @override
+  void initState() {
+    if (_myBox.get("TODOTASKS") == null) {
+      db.createInitialTasks();
+    } else {
+      db.loadTasks();
+    }
+    super.initState();
+  }
+
   final myController = TextEditingController();
-  final List todoTasks = [
-    ["Sample Task", false],
-  ];
 
   void checkBoxTapped(bool? value, int index) {
     setState(() {
-      todoTasks[index][1] = !todoTasks[index][1];
+      db.todoTasks[index][1] = !db.todoTasks[index][1];
     });
+    db.updateTasks();
   }
 
   void addNewTask() {
     setState(() {
-      todoTasks.add([myController.text, false]);
+      db.todoTasks.add([myController.text, false]);
       myController.clear();
     });
     Navigator.of(context).pop();
+    db.updateTasks();
   }
 
   void addButtonTapped() {
@@ -46,8 +60,9 @@ class _HomeState extends State<Home> {
 
   void deleteTask(int index) {
     setState(() {
-      todoTasks.removeAt(index);
+      db.todoTasks.removeAt(index);
     });
+    db.updateTasks();
   }
 
   @override
@@ -69,11 +84,11 @@ class _HomeState extends State<Home> {
         child: Icon(Icons.add),
       ),
       body: ListView.builder(
-        itemCount: todoTasks.length,
+        itemCount: db.todoTasks.length,
         itemBuilder: (context, index) {
           return TodoTile(
-            taskName: todoTasks[index][0],
-            checkBoxClicked: todoTasks[index][1],
+            taskName: db.todoTasks[index][0],
+            checkBoxClicked: db.todoTasks[index][1],
             onChanged: (value) => checkBoxTapped(value, index),
             deleteTask: (value) => deleteTask(index),
           );
